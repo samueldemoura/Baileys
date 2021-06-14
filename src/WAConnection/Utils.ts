@@ -48,7 +48,7 @@ export const newMessagesDB = (messages: WAMessage[] = []) => {
     const db = new KeyedDB(waMessageKey, WA_MESSAGE_ID)
     messages.forEach(m => !db.get(WA_MESSAGE_ID(m)) && db.insert(m))
     return db
-} 
+}
 
 export function shallowChanges <T> (old: T, current: T, {lookForDeletedKeys}: {lookForDeletedKeys: boolean}): Partial<T> {
     let changes: Partial<T> = {}
@@ -143,12 +143,12 @@ export async function promiseTimeout<T>(ms: number, promise: (resolve: (v?: T)=>
     if (!ms) return new Promise (promise)
     const stack = new Error().stack
     // Create a promise that rejects in <ms> milliseconds
-    let {delay, cancel} = delayCancellable (ms) 
+    let {delay, cancel} = delayCancellable (ms)
     const p = new Promise ((resolve, reject) => {
         delay
         .then(() => reject(TimedOutError(stack)))
-        .catch (err => reject(err)) 
-        
+        .catch (err => reject(err))
+
         promise (resolve, reject)
     })
     .finally (cancel)
@@ -171,10 +171,10 @@ export function generateMessageID() {
 export function decryptWA (message: string | Buffer, macKey: Buffer, encKey: Buffer, decoder: Decoder, fromMe: boolean=false): [string, Object, [number, number]?] {
     let commaIndex = message.indexOf(',') // all whatsapp messages have a tag and a comma, followed by the actual message
     if (commaIndex < 0) throw new BaileysError ('invalid message', { message }) // if there was no comma, then this message must be not be valid
-    
+
     if (message[commaIndex+1] === ',') commaIndex += 1
     let data = message.slice(commaIndex+1, message.length)
-    
+
     // get the message tag.
     // If a query was done, the server will respond with the same message tag we sent the query with
     const messageTag: string = message.slice(0, commaIndex).toString()
@@ -187,7 +187,7 @@ export function decryptWA (message: string | Buffer, macKey: Buffer, encKey: Buf
             if (!macKey || !encKey) {
                 throw new BaileysError ('recieved encrypted buffer when auth creds unavailable', { message })
             }
-            /* 
+            /*
                 If the data recieved was not a JSON, then it must be an encrypted message.
                 Such a message can only be decrypted if we're connected successfully to the servers & have encryption keys
             */
@@ -195,11 +195,11 @@ export function decryptWA (message: string | Buffer, macKey: Buffer, encKey: Buf
                 tags = [data[0], data[1]]
                 data = data.slice(2, data.length)
             }
-            
+
             const checksum = data.slice(0, 32) // the first 32 bytes of the buffer are the HMAC sign of the message
             data = data.slice(32, data.length) // the actual message
             const computedChecksum = hmacSign(data, macKey) // compute the sign of the message we recieved using our macKey
-            
+
             if (checksum.equals(computedChecksum)) {
                 // the checksum the server sent, must match the one we computed for the message to be valid
                 const decrypted = aesDecrypt(data, encKey) // decrypt using AES
@@ -213,7 +213,7 @@ export function decryptWA (message: string | Buffer, macKey: Buffer, encKey: Buf
                     message: message.slice(0, 80).toString()
                 })
             }
-        }   
+        }
     }
     return [messageTag, json, tags]
 }
@@ -246,6 +246,7 @@ const extractVideoThumb = async (
     }) as Promise<void>
 
 export const compressImage = async (bufferOrFilePath: Buffer | string) => {
+    await new Promise((r) => setTimeout(r, 100));
     const jimp = await Jimp.read(bufferOrFilePath as any)
     const result = await jimp.resize(48, 48).getBufferAsync(Jimp.MIME_JPEG)
     return result
@@ -319,7 +320,7 @@ export const getGotStream = async(url: string | URL, options: Options & { isStre
         fetched.once('response', ({statusCode: status}: Response) => {
             if (status >= 400) {
                 reject(new BaileysError (
-                    'Invalid code (' + status + ') returned', 
+                    'Invalid code (' + status + ') returned',
                     { status }
                 ))
             } else {
@@ -328,7 +329,7 @@ export const getGotStream = async(url: string | URL, options: Options & { isStre
         })
     })
     return fetched
-} 
+}
 export const encryptedStream = async(media: WAMediaUpload, mediaType: MessageType, saveOriginalFileIfRequired = true) => {
     const { stream, type } = await getStream(media)
 
@@ -345,7 +346,7 @@ export const encryptedStream = async(media: WAMediaUpload, mediaType: MessageTyp
         bodyPath = join(tmpdir(), mediaType + generateMessageID())
         writeStream = createWriteStream(bodyPath)
     }
-    
+
     let fileLength = 0
     const aes = Crypto.createCipheriv('aes-256-cbc', cipherKey, iv)
     let hmac = Crypto.createHmac('sha256', macKey).update(iv)
@@ -367,10 +368,10 @@ export const encryptedStream = async(media: WAMediaUpload, mediaType: MessageTyp
 
     const mac = hmac.digest().slice(0, 10)
     sha256Enc = sha256Enc.update(mac)
-    
+
     const fileSha256 = sha256Plain.digest()
     const fileEncSha256 = sha256Enc.digest()
-    
+
     encWriteStream.write(mac)
     encWriteStream.end()
 
@@ -392,7 +393,7 @@ export const encryptedStream = async(media: WAMediaUpload, mediaType: MessageTyp
  * @param message the media message you want to decode
  */
 export async function decryptMediaMessageBuffer(message: WAMessageContent): Promise<Readable> {
-    /* 
+    /*
         One can infer media type from the key in the message
         it is usually written as [mediaType]Message. Eg. imageMessage, audioMessage etc.
     */
@@ -439,7 +440,7 @@ export async function decryptMediaMessageBuffer(message: WAMessageContent): Prom
                 callback()
             } catch(error) {
                 callback(error)
-            }  
+            }
         },
         final(callback) {
             try {
