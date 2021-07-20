@@ -201,7 +201,8 @@ export class WAConnection extends Base {
             this.emit ('qr', qr)
 
             this.initTimeout = setTimeout (async () => {
-                if (this.state === 'open') return
+                // fix taken from https://github.com/adiwajshing/Baileys/issues/446#issuecomment-870168366
+                if (this.state !== 'connecting') return
 
                 this.logger.debug ('regenerating QR')
                 try {
